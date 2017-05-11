@@ -27,7 +27,7 @@ SemaphoreHandle_t xSemaphore = NULL;
 // define two tasks for Blink & AnalogRead
 void TareaTempHum( void *pvParameters );
 void TareaReloj( void *pvParameters );
-void TareaFotoresistencia( void *pvParameters );
+void Tareafotoresistencia( void *pvParameters );
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -55,7 +55,7 @@ void setup() {
   xTaskCreate(
     TareaTempHum
     ,  (const portCHAR *)"TareaTempHum"   // A name just for humans
-    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  100  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -63,19 +63,19 @@ void setup() {
   xTaskCreate(
     TareaReloj
     ,  (const portCHAR *) "TareaReloj"
-    ,  256  // Stack size
+    ,  200  // Stack size
     ,  NULL
     ,  3  // Priority
     ,  NULL );
 
   xTaskCreate(
-    TareaFotoresistencia
-    ,  (const portCHAR *) "TareaFotoresistencia"
-    ,  256  // Stack size
+    Tareafotoresistencia
+    ,  (const portCHAR *)"Tareafotoresistencia"   // A name just for humans
+    ,  100  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
-    ,  2  // Priority
+    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
-
+    
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
   xSemaphore = xSemaphoreCreateMutex();
 }
@@ -209,19 +209,20 @@ void TareaReloj(void *pvParameters)  // This is a task.
   }
 }
 
-void TareaFotoresistencia(void *pvParameters)  // This is a task.
+void Tareafotoresistencia(void *pvParameters)  // This is a task.
 {
   (void) pvParameters;
 
-  for (;;){
-    V = analogRead(sensorPin); //realizar la lectura
-    fotoresistencia = 1024L * Rc / V - Rc;   //calcular el valor de la resistencia
+  for (;;)
+  {
     if( xSemaphore != NULL )
     {
         /* See if we can obtain the semaphore.  If the semaphore is not
         available wait 10 ticks to see if it becomes free. */
         if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
         {
+           V = analogRead(sensorPin); //realizar la lectura
+           fotoresistencia = 1024L * Rc / V - Rc;   //calcular el valor de la resistencia
            Serial.print("Fotoresistencia: ");
            Serial.print(fotoresistencia);
            Serial.println();
